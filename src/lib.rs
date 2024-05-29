@@ -28,7 +28,9 @@ struct MyState(Mutex<HashMap<String, String>>);
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the universal-updater APIs.
 pub trait UniversalUpdaterExt<R: Runtime> {
-    fn universal_updater(&self) -> &UniversalUpdater<R>;
+    fn universal_updater(&self) -> &Result<UniversalUpdater<R>>;
+
+    fn universal_updater_builder
 }
 
 impl<R: Runtime, T: Manager<R>> crate::UniversalUpdaterExt<R> for T {
@@ -41,7 +43,12 @@ impl<R: Runtime, T: Manager<R>> crate::UniversalUpdaterExt<R> for T {
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     println!("Initializing universal-updater plugin");
     Builder::new("universal-updater")
-        .invoke_handler(tauri::generate_handler![commands::execute, commands::ping])
+        .invoke_handler(tauri::generate_handler![
+            commands::check,
+            commands::download,
+            commands::install,
+            commands::download_and_install,
+        ])
         .setup(|app, api| {
             #[cfg(mobile)]
             let universal_updater = mobile::init(app, api)?;
