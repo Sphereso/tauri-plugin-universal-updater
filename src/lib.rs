@@ -1,6 +1,6 @@
 use tauri::{
-  plugin::{Builder, TauriPlugin},
-  Manager, Runtime,
+    plugin::{Builder, TauriPlugin},
+    Manager, Runtime,
 };
 
 use std::{collections::HashMap, sync::Mutex};
@@ -28,29 +28,30 @@ struct MyState(Mutex<HashMap<String, String>>);
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the universal-updater APIs.
 pub trait UniversalUpdaterExt<R: Runtime> {
-  fn universal_updater(&self) -> &UniversalUpdater<R>;
+    fn universal_updater(&self) -> &UniversalUpdater<R>;
 }
 
 impl<R: Runtime, T: Manager<R>> crate::UniversalUpdaterExt<R> for T {
-  fn universal_updater(&self) -> &UniversalUpdater<R> {
-    self.state::<UniversalUpdater<R>>().inner()
-  }
+    fn universal_updater(&self) -> &UniversalUpdater<R> {
+        self.state::<UniversalUpdater<R>>().inner()
+    }
 }
 
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
-  Builder::new("universal-updater")
-    .invoke_handler(tauri::generate_handler![commands::execute])
-    .setup(|app, api| {
-      #[cfg(mobile)]
-      let universal_updater = mobile::init(app, api)?;
-      #[cfg(desktop)]
-      let universal_updater = desktop::init(app, api)?;
-      app.manage(universal_updater);
+    println!("Initializing universal-updater plugin");
+    Builder::new("universal-updater")
+        .invoke_handler(tauri::generate_handler![commands::execute, commands::ping])
+        .setup(|app, api| {
+            #[cfg(mobile)]
+            let universal_updater = mobile::init(app, api)?;
+            #[cfg(desktop)]
+            let universal_updater = desktop::init(app, api)?;
+            app.manage(universal_updater);
 
-      // manage state so it is accessible by the commands
-      app.manage(MyState::default());
-      Ok(())
-    })
-    .build()
+            // manage state so it is accessible by the commands
+            app.manage(MyState::default());
+            Ok(())
+        })
+        .build()
 }
