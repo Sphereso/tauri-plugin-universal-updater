@@ -295,31 +295,24 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "allow-execute -> Enables the execute command without any pre-configured scope.",
+          "description": "allow-check -> Enables the check command without any pre-configured scope.",
           "type": "string",
           "enum": [
-            "allow-execute"
+            "allow-check"
           ]
         },
         {
-          "description": "deny-execute -> Denies the execute command without any pre-configured scope.",
+          "description": "deny-check -> Denies the check command without any pre-configured scope.",
           "type": "string",
           "enum": [
-            "deny-execute"
+            "deny-check"
           ]
         },
         {
-          "description": "allow-ping -> Enables the ping command without any pre-configured scope.",
+          "description": "default -> Allows making HTTP requests",
           "type": "string",
           "enum": [
-            "allow-ping"
-          ]
-        },
-        {
-          "description": "deny-ping -> Denies the ping command without any pre-configured scope.",
-          "type": "string",
-          "enum": [
-            "deny-ping"
+            "default"
           ]
         }
       ]

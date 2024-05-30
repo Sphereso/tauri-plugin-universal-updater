@@ -1,37 +1,36 @@
 use serde::de::DeserializeOwned;
 use tauri::{
-  plugin::{PluginApi, PluginHandle},
-  AppHandle, Runtime,
+    plugin::{PluginApi, PluginHandle},
+    AppHandle, Runtime,
 };
-
-use crate::models::*;
+use url::Url;
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "";
+const PLUGIN_IDENTIFIER: &str = "com.sphereso.updater";
 
 #[cfg(target_os = "ios")]
-tauri::ios_plugin_binding!(init_plugin_universal-updater);
+tauri::ios_plugin_binding!(universal_updater_plugin);
 
-// initializes the Kotlin or Swift plugin classes
-pub fn init<R: Runtime, C: DeserializeOwned>(
-  _app: &AppHandle<R>,
-  api: PluginApi<R, C>,
+use crate::{Config, Error};
+
+pub fn init<R: Runtime>(
+    _app: &AppHandle<R>,
+    api: PluginApi<R, Config>,
 ) -> crate::Result<UniversalUpdater<R>> {
-  #[cfg(target_os = "android")]
-  let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "ExamplePlugin")?;
-  #[cfg(target_os = "ios")]
-  let handle = api.register_ios_plugin(init_plugin_universal-updater)?;
-  Ok(UniversalUpdater(handle))
+    let config = api.config().clone();
+    let endpoint = config.endpoint.ok_or(Error::EmptyEndpoints)?;
+
+    #[cfg(target_os = "android")]
+    let handle = api.register_android_plugin(PLUGIN_IDENTIFIER, "UniversalUpdaterPlugin")?;
+    #[cfg(target_os = "ios")]
+    let handle = api.register_ios_plugin(universal_updater_plugin)?;
+
+    Ok(UniversalUpdater {
+        handle: handle,
+        endpoint: endpoint.0.clone(),
+    })
 }
-
-/// Access to the universal-updater APIs.
-pub struct UniversalUpdater<R: Runtime>(PluginHandle<R>);
-
-impl<R: Runtime> UniversalUpdater<R> {
-  pub fn ping(&self, payload: PingRequest) -> crate::Result<PingResponse> {
-    self
-      .0
-      .run_mobile_plugin("ping", payload)
-      .map_err(Into::into)
-  }
+pub struct UniversalUpdater<R: Runtime> {
+    handle: PluginHandle<R>,
+    pub endpoint: Url,
 }

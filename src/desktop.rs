@@ -1,21 +1,22 @@
 use serde::de::DeserializeOwned;
 use tauri::{plugin::PluginApi, AppHandle, Runtime};
+use url::Url;
 
-use crate::models::*;
+use crate::{Config, Error};
 
-pub fn init<R: Runtime, C: DeserializeOwned>(
+pub fn init<R: Runtime>(
     app: &AppHandle<R>,
-    _api: PluginApi<R, C>,
+    api: PluginApi<R, Config>,
 ) -> crate::Result<UniversalUpdater<R>> {
-    Ok(UniversalUpdater(app.clone()))
+    let config = api.config().clone();
+    let endpoint = config.endpoint.ok_or(Error::EmptyEndpoints)?;
+
+    Ok(UniversalUpdater {
+        app: app.clone(),
+        endpoint: endpoint.0.clone(),
+    })
 }
-
-/// Access to the universal-updater APIs.
-pub struct UniversalUpdater<R: Runtime>(AppHandle<R>);
-
-impl<R: Runtime> UniversalUpdater<R> {
-    pub fn ping(&self) -> Result<(), ()> {
-        println!("ping");
-        Ok(())
-    }
+pub struct UniversalUpdater<R: Runtime> {
+    app: AppHandle<R>,
+    pub endpoint: Url,
 }

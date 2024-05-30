@@ -65,6 +65,9 @@ pub enum Error {
     Http(#[from] http::Error),
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
+    #[cfg(mobile)]
+    #[error(transparent)]
+    PluginInvoke(#[from] tauri::plugin::mobile::PluginInvokeError),
 }
 
 impl Serialize for Error {

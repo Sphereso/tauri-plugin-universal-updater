@@ -1,7 +1,11 @@
 use serde::Serialize;
-use tauri::{ipc::Channel, AppHandle, Resource, ResourceId, Runtime, State, Webview, Window};
+use tauri::{
+    ipc::Channel, AppHandle, Manager, Resource, ResourceId, Runtime, State, Webview, Window,
+};
 
-use crate::Result;
+use crate::Update;
+
+use crate::{Result, UniversalUpdater, UniversalUpdaterExt};
 use std::time::Duration;
 
 use url::Url;
@@ -37,43 +41,19 @@ impl Resource for DownloadedBytes {}
 #[tauri::command]
 pub(crate) async fn check<R: Runtime>(
     webview: Webview<R>,
+    state: State<'_, UniversalUpdater<R>>,
     headers: Option<Vec<(String, String)>>,
     timeout: Option<u64>,
     proxy: Option<String>,
     target: Option<String>,
 ) -> Result<Metadata> {
-    let mut builder = webview.updater_builder();
-    if let Some(headers) = headers {
-        for (k, v) in headers {
-            builder = builder.header(k, v)?;
-        }
-    }
-    if let Some(timeout) = timeout {
-        builder = builder.timeout(Duration::from_secs(timeout));
-    }
-    if let Some(ref proxy) = proxy {
-        let url = Url::parse(proxy.as_str())?;
-        builder = builder.proxy(url);
-    }
-    if let Some(target) = target {
-        builder = builder.target(target);
-    }
+    let updater = state.inner();
+    println!("check command hello from rust");
 
-    let updater = builder.build()?;
-    let update = updater.check().await?;
-    let mut metadata = Metadata::default();
-    if let Some(update) = update {
-        metadata.available = true;
-        metadata.current_version.clone_from(&update.current_version);
-        metadata.version.clone_from(&update.version);
-        metadata.date = update.date.map(|d| d.to_string());
-        metadata.body.clone_from(&update.body);
-        metadata.rid = Some(webview.resources_table().add(update));
-    }
-
-    Ok(metadata)
+    let result = updater.check().await?;
+    Ok(Metadata::default())
 }
-
+/*
 #[tauri::command]
 pub(crate) async fn download<R: Runtime>(
     webview: Webview<R>,
@@ -141,3 +121,4 @@ pub(crate) async fn download_and_install<R: Runtime>(
 
     Ok(())
 }
+*/

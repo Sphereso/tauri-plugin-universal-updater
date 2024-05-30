@@ -58,7 +58,7 @@ class Update extends Resource {
     if (onEvent) {
       channel.onmessage = onEvent;
     }
-    const downloadedBytesRid = await invoke<number>("plugin:updater|download", {
+    const downloadedBytesRid = await invoke<number>("plugin:universal-updater|download", {
       onEvent: channel,
       rid: this.rid,
     });
@@ -71,7 +71,7 @@ class Update extends Resource {
       throw "Update.install called before Update.download";
     }
 
-    await invoke("plugin:updater|install", {
+    await invoke("plugin:universal-updater|install", {
       updateRid: this.rid,
       bytesRid: this.downloadedBytes.rid,
     });
@@ -88,7 +88,7 @@ class Update extends Resource {
     if (onEvent) {
       channel.onmessage = onEvent;
     }
-    await invoke("plugin:updater|download_and_install", {
+    await invoke("plugin:universal-updater|download_and_install", {
       onEvent: channel,
       rid: this.rid,
     });
@@ -106,7 +106,7 @@ async function check(options?: CheckOptions): Promise<Update | null> {
     options.headers = Array.from(new Headers(options.headers).entries());
   }
 
-  return await invoke<UpdateMetadata>("plugin:updater|check", {
+  return await invoke<UpdateMetadata>("plugin:universal-updater|check", {
     ...options,
   }).then((meta) => (meta.available ? new Update(meta) : null));
 }

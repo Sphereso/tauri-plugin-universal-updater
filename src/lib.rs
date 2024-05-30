@@ -1,54 +1,48 @@
+use reqwest::ClientBuilder;
 use tauri::{
-    plugin::{Builder, TauriPlugin},
+    plugin::{Builder as PluginBuilder, TauriPlugin},
     Manager, Runtime,
 };
+use url::Url;
 
-use std::{collections::HashMap, sync::Mutex};
+use std::{collections::HashMap, ffi::OsString, sync::Mutex};
 
 pub use models::*;
+
+mod commands;
+mod config;
+mod error;
+mod models;
+
+pub use config::Config;
+pub use error::{Error, Result};
 
 #[cfg(desktop)]
 mod desktop;
 #[cfg(mobile)]
 mod mobile;
 
-mod commands;
-mod error;
-mod models;
-
-pub use error::{Error, Result};
-
 #[cfg(desktop)]
-use desktop::UniversalUpdater;
+use desktop::*;
 #[cfg(mobile)]
-use mobile::UniversalUpdater;
-
-#[derive(Default)]
-struct MyState(Mutex<HashMap<String, String>>);
+use mobile::*;
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the universal-updater APIs.
 pub trait UniversalUpdaterExt<R: Runtime> {
-    fn universal_updater(&self) -> &Result<UniversalUpdater<R>>;
-
-    fn universal_updater_builder
+    fn updater(&self) -> Result<UniversalUpdater<R>>;
 }
 
-impl<R: Runtime, T: Manager<R>> crate::UniversalUpdaterExt<R> for T {
-    fn universal_updater(&self) -> &UniversalUpdater<R> {
-        self.state::<UniversalUpdater<R>>().inner()
+impl<R: Runtime, T: Manager<R>> UniversalUpdaterExt<R> for T {
+    fn updater(&self) -> Result<UniversalUpdater<R>> {
+        Err(Error::EmptyEndpoints)
     }
 }
 
 /// Initializes the plugin.
-pub fn init<R: Runtime>() -> TauriPlugin<R> {
+pub fn init<R: Runtime>() -> TauriPlugin<R, Config> {
     println!("Initializing universal-updater plugin");
-    Builder::new("universal-updater")
-        .invoke_handler(tauri::generate_handler![
-            commands::check,
-            commands::download,
-            commands::install,
-            commands::download_and_install,
-        ])
+    PluginBuilder::new("universal-updater")
+        .invoke_handler(tauri::generate_handler![commands::check])
         .setup(|app, api| {
             #[cfg(mobile)]
             let universal_updater = mobile::init(app, api)?;
@@ -57,8 +51,23 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
             app.manage(universal_updater);
 
             // manage state so it is accessible by the commands
-            app.manage(MyState::default());
             Ok(())
         })
         .build()
 }
+
+impl<R: Runtime> UniversalUpdater<R> {
+    pub async fn check(&self) -> Result<Option<Update>> {
+        let url = self.endpoint.clone();
+
+        let mut request = ClientBuilder::new();
+
+        let response = request.build()?.get(url).send().await?;
+
+        println!("success");
+
+        Ok(Some(Update {}))
+    }
+}
+
+pub struct Update {}
