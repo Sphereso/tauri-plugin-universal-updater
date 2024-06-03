@@ -1,4 +1,4 @@
 "$schema" = "schemas/schema.json"
 [default]
 description = "Allows making HTTP requests"
-permissions = ["allow-check"]
+permissions = ["allow-check", "allow-download-and-install"]

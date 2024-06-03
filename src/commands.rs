@@ -48,10 +48,20 @@ pub(crate) async fn check<R: Runtime>(
     target: Option<String>,
 ) -> Result<Metadata> {
     let updater = state.inner();
-    println!("check command hello from rust");
 
-    let result = updater.check().await?;
-    Ok(Metadata::default())
+    let update = updater.check().await?;
+    let mut metadata = Metadata::default();
+
+    if let Some(update) = update {
+        metadata.available = true;
+        metadata.current_version.clone_from(&update.current_version);
+        metadata.version.clone_from(&update.version);
+        metadata.date = update.date.map(|d| d.to_string());
+        metadata.body.clone_from(&update.body);
+        metadata.rid = Some(webview.resources_table().add(update));
+    }
+
+    Ok(metadata)
 }
 /*
 #[tauri::command]
@@ -92,20 +102,23 @@ pub(crate) async fn install<R: Runtime>(
     update.install(&bytes.0)?;
     let _ = webview.resources_table().close(bytes_rid);
     Ok(())
-}
+}*/
 
 #[tauri::command]
 pub(crate) async fn download_and_install<R: Runtime>(
     webview: Webview<R>,
+    state: State<'_, UniversalUpdater<R>>,
     rid: ResourceId,
     on_event: Channel,
 ) -> Result<()> {
+    let updater = state.inner();
     let update = webview.resources_table().get::<Update>(rid)?;
 
     let mut first_chunk = true;
 
     update
         .download_and_install(
+            &updater.handle,
             |chunk_length, content_length| {
                 if first_chunk {
                     first_chunk = !first_chunk;
@@ -121,4 +134,3 @@ pub(crate) async fn download_and_install<R: Runtime>(
 
     Ok(())
 }
-*/

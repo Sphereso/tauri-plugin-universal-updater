@@ -14,7 +14,7 @@ class PingArgs {
 }
 
 @TauriPlugin
-class UniversalUpdaterPlugin(private val activity: Activity): Plugin(activity) {
+class ExamplePlugin(private val activity: Activity): Plugin(activity) {
     private val implementation = Example()
 
     @Command

@@ -5,11 +5,11 @@ plugins {
 
 android {
     namespace = "com.sphereso.updater"
-    compileSdk = 34
+    compileSdk = 32
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 33
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")

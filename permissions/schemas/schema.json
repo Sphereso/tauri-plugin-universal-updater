@@ -309,6 +309,20 @@
           ]
         },
         {
+          "description": "allow-download-and-install -> Enables the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "allow-download-and-install"
+          ]
+        },
+        {
+          "description": "deny-download-and-install -> Denies the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "deny-download-and-install"
+          ]
+        },
+        {
           "description": "default -> Allows making HTTP requests",
           "type": "string",
           "enum": [
