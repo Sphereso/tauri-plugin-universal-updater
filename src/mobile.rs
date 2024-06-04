@@ -130,7 +130,7 @@ impl Update {
         Ok(())
     }
 
-    pub async fn download_and_install<R: Runtime>(
+    pub async fn download_and_install<R: Runtime, D: FnOnce()>(
         &self,
         handle: &PluginHandle<R>,
         on_chunk: Channel,

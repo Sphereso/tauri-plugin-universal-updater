@@ -140,7 +140,7 @@ pub(crate) async fn download_and_install<R: Runtime>(
 
     #[cfg(mobile)]
     update
-        .download_and_install(&updater.handle, on_event)
+        .download_and_install(&updater.handle, on_event, || println!("download finished"))
         .await?;
 
     Ok(())
