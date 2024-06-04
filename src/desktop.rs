@@ -1,10 +1,9 @@
+use crate::{Config, Error, Result, Update};
 use futures_util::StreamExt;
 use reqwest::ClientBuilder;
 use semver::Version;
-use tauri::{plugin::PluginApi, AppHandle, Runtime};
+use tauri::{ipc::Channel, plugin::PluginApi, AppHandle, Runtime};
 use url::Url;
-
-use crate::{Config, Error, Result, Update};
 
 pub fn init<R: Runtime>(
     app: &AppHandle<R>,

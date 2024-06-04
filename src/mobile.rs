@@ -1,6 +1,8 @@
+use crate::commands::DownloadEvent;
 use semver::Version;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tauri::{
+    ipc::Channel,
     plugin::{PluginApi, PluginHandle},
     AppHandle, Runtime,
 };
@@ -50,28 +52,41 @@ pub struct UniversalUpdater<R: Runtime> {
     pub json_target: String,
 }
 
-#[derive(Serialize, Deserialize)]
-struct PingModel {
+#[derive(Serialize)]
+struct DownloadArgs {
+    channel: Channel,
+    url: Url,
+}
+
+#[derive(Deserialize)]
+struct DownloadResult {
     value: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct Progress {
+    chunk: usize,
+    length: Option<u64>,
+}
+
 impl Update {
-    pub async fn download<R: Runtime, C: FnMut(usize, Option<u64>), D: FnOnce()>(
+    pub async fn download<R: Runtime, D: FnOnce()>(
         &self,
         handle: &PluginHandle<R>,
-        mut on_chunk: C,
+        on_chunk: Channel,
         on_download_finish: D,
     ) -> Result<()> {
-        let r = handle
-            .run_mobile_plugin::<PingModel>(
-                "ping",
-                PingModel {
-                    value: String::from("test"),
+        handle
+            .run_mobile_plugin(
+                "download",
+                DownloadArgs {
+                    channel: on_chunk,
+                    url: self.download_url.clone(),
                 },
             )
-            .map_err(Into::<Error>::into)?
-            .value;
-        println!("Received: {r} from android");
+            .map_err(Into::<Error>::into)?;
+        println!("Finished Download");
+        on_download_finish();
         /*let mut request = ClientBuilder::new();
 
         let response = request
@@ -115,10 +130,10 @@ impl Update {
         Ok(())
     }
 
-    pub async fn download_and_install<R: Runtime, C: FnMut(usize, Option<u64>), D: FnOnce()>(
+    pub async fn download_and_install<R: Runtime>(
         &self,
         handle: &PluginHandle<R>,
-        on_chunk: C,
+        on_chunk: Channel,
         on_download_finish: D,
     ) -> Result<()> {
         let _ = self.download(handle, on_chunk, on_download_finish).await?;

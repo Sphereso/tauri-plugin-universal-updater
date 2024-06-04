@@ -114,22 +114,33 @@ pub(crate) async fn download_and_install<R: Runtime>(
     let updater = state.inner();
     let update = webview.resources_table().get::<Update>(rid)?;
 
-    let mut first_chunk = true;
+    #[cfg(desktop)]
+    {
+        let mut first_chunk = true;
+        update
+            .download_and_install(
+                &updater.handle,
+                |chunk, length| {
+                    if first_chunk {
+                        first_chunk = !first_chunk;
+                        let _ = on_event.send(DownloadEvent::Started {
+                            content_length: length,
+                        });
+                    };
+                    let _ = on_event.send(DownloadEvent::Progress {
+                        chunk_length: chunk,
+                    });
+                },
+                || {
+                    let _ = on_event.send(DownloadEvent::Finished);
+                },
+            )
+            .await?;
+    }
 
+    #[cfg(mobile)]
     update
-        .download_and_install(
-            &updater.handle,
-            |chunk_length, content_length| {
-                if first_chunk {
-                    first_chunk = !first_chunk;
-                    let _ = on_event.send(DownloadEvent::Started { content_length });
-                }
-                let _ = on_event.send(DownloadEvent::Progress { chunk_length });
-            },
-            || {
-                let _ = on_event.send(&DownloadEvent::Finished);
-            },
-        )
+        .download_and_install(&updater.handle, on_event)
         .await?;
 
     Ok(())
